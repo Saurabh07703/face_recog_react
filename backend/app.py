@@ -48,7 +48,17 @@ def get_models():
 
 # Initialize Firebase
 db = None
-# ... (rest of firebase init) ...
+try:
+    if os.path.exists("serviceAccountKey.json"):
+        cred = credentials.Certificate("serviceAccountKey.json")
+        firebase_admin.initialize_app(cred)
+        db = firestore.client()
+        print("Firebase initialized successfully.")
+    else:
+        print("Warning: serviceAccountKey.json not found. Running in local mode (features.txt).")
+except Exception as e:
+    print(f"Error initializing Firebase: {e}")
+    print("Running in local mode.")
 
 # Function to extract features from an image using FaceNet model
 def extract_features_facenet(image):
@@ -250,96 +260,7 @@ def write_to_db(name, orientation, features):
 def health():
     return jsonify({'status': 'ok', 'backend': 'firebase' if db else 'local'})
 
-@app.route('/upload', methods=['POST'])
-def upload():
-    if 'image' not in request.json or 'name' not in request.json or 'orientation' not in request.json:
-        return jsonify({'error': 'Incomplete data'}), 400
 
-    name = request.json['name']
-    orientation = request.json['orientation']
-    
-    try:
-        image_data = request.json['image'].split(',')[1]
-        
-        # Decode base64 to bytes
-        try:
-            image_bytes = base64.b64decode(image_data)
-        except Exception as e:
-             return jsonify({'error': 'Invalid base64 image data'}), 400
-
-        if not image_bytes:
-            return jsonify({'error': 'Empty image data'}), 400
-
-        # Robust decoding
-        image = None
-        try:
-            nparr = np.array(bytearray(image_bytes), dtype=np.uint8)
-            image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        except Exception as e:
-             print(f"cv2.imdecode exception: {e}")
-
-        # Fallback if memory decode failed
-        if image is None:
-            print("Fallback to file decoding...")
-            try:
-                temp_filename = f"temp_{uuid.uuid4().hex}.png"
-                with open(temp_filename, "wb") as f:
-                    f.write(image_bytes)
-                image = cv2.imread(temp_filename)
-                if os.path.exists(temp_filename):
-                    os.remove(temp_filename)
-            except Exception as e2:
-                 return jsonify({'error': f'Failed to decode image: {str(e2)}'}), 400
-
-        if image is None:
-             return jsonify({'error': 'Failed to decode image'}), 400
-
-        # Convert BGR to RGB for MTCNN
-        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        
-        # Perform face detection using facenet-pytorch MTCNN
-        # Detect returns bounding boxes and probabilities
-        try:
-            boxes, _ = mtcnn_detector.detect(Image.fromarray(image_rgb))
-        except Exception as e:
-             # numpy compatibility issue specifically
-             print(f"MTCNN detect error: {e}")
-             return jsonify({'error': f"Face detection error: {str(e)}"}), 500
-
-        if boxes is None:
-            return jsonify({'error': 'No faces detected'}), 400
-
-        # Take the first face (since select_largest=True)
-        box = boxes[0]
-        x1, y1, x2, y2 = [int(b) for b in box]
-        
-        # Ensure within bounds
-        h, w, _ = image_rgb.shape
-        x1 = max(0, x1)
-        y1 = max(0, y1)
-        x2 = min(w, x2)
-        y2 = min(h, y2)
-        
-        # Extract face ROI
-        face_roi = image_rgb[y1:y2, x1:x2]
-        
-        if face_roi.size == 0:
-             return jsonify({'error': 'Face ROI is empty'}), 400
-
-        features = extract_features_facenet(face_roi)
-
-        if features is None:
-            return jsonify({'error': 'Failed to extract features'}), 500
-
-        write_success = write_to_db(name, orientation, features)
-        if not write_success:
-             return jsonify({'error': 'Failed to save to database'}), 500
-        
-        return jsonify({'message': 'Face registered successfully', 'name': name})
-
-    except Exception as e:
-        print(f"Error in upload: {e}")
-        return jsonify({'error': str(e)}), 500
 
 @app.route('/match', methods=['POST'])
 def perform_match():
