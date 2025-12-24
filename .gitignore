@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+
+# Environment & Private Data
+.env
+.env.local
+.DS_Store
+backend/serviceAccountKey.json
+backend/features.txt
+backend/*.png
+backend/temp_*.png
+
+# IDEs
+.vscode/
+.idea/
+
+# Build
+dist/
+build/

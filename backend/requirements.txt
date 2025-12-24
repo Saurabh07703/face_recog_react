@@ -1,0 +1,12 @@
+flask
+flask-cors
+gunicorn
+opencv-python==4.8.1.78
+numpy<2
+mtcnn
+firebase-admin
+scikit-learn
+scipy==1.11.4
+facenet-pytorch
+torch
+torchvision
