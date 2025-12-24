@@ -40,6 +40,13 @@ def get_models():
         # Load FaceNet
         facenet_model = InceptionResnetV1(pretrained='vggface2').eval().to(device)
         
+        # QUANTIZATION: Reduce model size for CPU (Render Free Tier)
+        if device.type == 'cpu':
+            print("Quantizing model for CPU optimization...")
+            facenet_model = torch.quantization.quantize_dynamic(
+                facenet_model, {torch.nn.Linear}, dtype=torch.qint8
+            )
+
         # Force garbage collection
         gc.collect()
         print("Models loaded successfully.")
@@ -138,6 +145,15 @@ def upload():
 
         # Convert BGR to RGB for MTCNN
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        
+        # RESIZE for Memory Optimization if too large
+        max_width = 640
+        h, w, _ = image_rgb.shape
+        if w > max_width:
+            scale = max_width / float(w)
+            new_h = int(h * scale)
+            image_rgb = cv2.resize(image_rgb, (max_width, new_h))
+            print(f"Resized image for detection to {max_width}x{new_h}")
         
         # Perform face detection using facenet-pytorch MTCNN
         # Detect returns bounding boxes and probabilities
