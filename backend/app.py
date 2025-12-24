@@ -13,64 +13,90 @@ import time
 import firebase_admin
 from firebase_admin import credentials, firestore
 from PIL import Image
+import gc
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
-# Determine device (CPU is safer for wide compatibility unless user has configured CUDA)
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-print(f"Running on device: {device}")
+# Global variables for models (Lazy persistence)
+mtcnn_detector = None
+facenet_model = None
+device = None
 
-# Load MTCNN for face detection (facenet-pytorch implementation)
-mtcnn_detector = MTCNN(keep_all=False, select_largest=True, device=device)
-
-# Load FaceNet model for feature extraction
-facenet_model = InceptionResnetV1(pretrained='vggface2').eval().to(device)
+def get_models():
+    global mtcnn_detector, facenet_model, device
+    if mtcnn_detector is None or facenet_model is None:
+        print("Loading models for the first time...")
+        # Determine device
+        device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        print(f"Running on device: {device}")
+        
+        # Disable gradients globally for inference to save memory
+        torch.set_grad_enabled(False)
+        
+        # Load MTCNN
+        mtcnn_detector = MTCNN(keep_all=False, select_largest=True, device=device)
+        
+        # Load FaceNet
+        facenet_model = InceptionResnetV1(pretrained='vggface2').eval().to(device)
+        
+        # Force garbage collection
+        gc.collect()
+        print("Models loaded successfully.")
+        
+    return mtcnn_detector, facenet_model, device
 
 # Initialize Firebase
 db = None
-try:
-    if os.path.exists("serviceAccountKey.json"):
-        cred = credentials.Certificate("serviceAccountKey.json")
-        firebase_admin.initialize_app(cred)
-        db = firestore.client()
-        print("Firebase initialized successfully.")
-    else:
-        print("Warning: serviceAccountKey.json not found. Running in local mode (features.txt).")
-except Exception as e:
-    print(f"Error initializing Firebase: {e}")
-    print("Running in local mode.")
+# ... (rest of firebase init) ...
 
 # Function to extract features from an image using FaceNet model
 def extract_features_facenet(image):
+    _, model, dev = get_models() # Ensure loaded
     try:
-        # Image passed here is expected to be a numpy array (RGB) or PIL Image
-        # If it's numpy, ensure it's RGB
+        # ... (rest of function) ...
+        # (Replace 'device' usage with 'dev' if needed or rely on global if simpler, 
+        # but 'dev' is safer from the getter)
+        
         if isinstance(image, np.ndarray):
-            # If standard CV2 BGR, convert to RGB. But caller usually handles this.
-            # We'll assume the caller passes the cropped face ROI.
-            # Facenet model expects tensor.
             pass
         
-        # Resize to 160x160 (standard for InceptionResnetV1)
-        # Note: InceptionResnetV1 expects 160x160. 
-        # using PIL resize is often better.
         pil_image = Image.fromarray(image)
         pil_image = pil_image.resize((160, 160))
         
-        # Convert to tensor and normalize
-        # standard normalization for this model is usually handled, but let's do manual:
-        # (img - 127.5) / 128
-        img_tensor = torch.tensor(np.array(pil_image), dtype=torch.float32).to(device)
-        img_tensor = img_tensor.permute(2, 0, 1).unsqueeze(0) # HWC -> 1CHW
+        img_tensor = torch.tensor(np.array(pil_image), dtype=torch.float32).to(dev)
+        img_tensor = img_tensor.permute(2, 0, 1).unsqueeze(0)
         img_tensor = (img_tensor - 127.5) / 128.0
 
-        features = facenet_model(img_tensor)
-        features = features.detach().cpu().numpy().flatten()  # Flatten the features
+        features = model(img_tensor)
+        features = features.detach().cpu().numpy().flatten()
         return features
     except Exception as e:
         print(f"Error extraction features: {e}")
         return None
+
+# ... (read_database and write_to_db remain the same) ...
+
+# ...
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    # ... checks ...
+    
+    # Ensure models are loaded before processing
+    detector, _, _ = get_models()
+    
+    # ... decoding logic ...
+
+        # Perform face detection using MTCNN
+        # REPLACE mtcnn_detector usage
+        try:
+            boxes, _ = detector.detect(Image.fromarray(image_rgb))
+        except Exception as e:
+             print(f"MTCNN detect error: {e}")
+             return jsonify({'error': f"Face detection error: {str(e)}"}), 500
+
+    # ... rest of upload ...
 
 def read_database(filename='features.txt'):
     # If using Firebase
@@ -273,10 +299,13 @@ def perform_match():
         if image is None:
              return jsonify({'error': 'Failed to decode image'}), 400
 
+        # Ensure models are loaded
+        detector, model, dev = get_models()
+
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         
         # Detect face
-        boxes, _ = mtcnn_detector.detect(Image.fromarray(image_rgb))
+        boxes, _ = detector.detect(Image.fromarray(image_rgb))
 
         if boxes is None:
             return jsonify({'error': 'No faces detected'}), 400
