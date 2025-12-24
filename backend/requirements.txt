@@ -1,12 +1,12 @@
 flask
 flask-cors
 gunicorn
-opencv-python==4.8.1.78
+opencv-python-headless
 numpy<2
 mtcnn
 firebase-admin
 scikit-learn
-scipy==1.11.4
+scipy
 facenet-pytorch
 torch
 torchvision
