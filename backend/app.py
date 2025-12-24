@@ -56,13 +56,18 @@ def get_models():
 # Initialize Firebase
 db = None
 try:
-    if os.path.exists("serviceAccountKey.json"):
-        cred = credentials.Certificate("serviceAccountKey.json")
+    # Check local file (dev) or Render secret path (prod)
+    cred_path = "serviceAccountKey.json"
+    if not os.path.exists(cred_path):
+        cred_path = "/etc/secrets/serviceAccountKey.json"
+
+    if os.path.exists(cred_path):
+        cred = credentials.Certificate(cred_path)
         firebase_admin.initialize_app(cred)
         db = firestore.client()
-        print("Firebase initialized successfully.")
+        print(f"Firebase initialized successfully using {cred_path}")
     else:
-        print("Warning: serviceAccountKey.json not found. Running in local mode (features.txt).")
+        print("Warning: serviceAccountKey.json not found in local or /etc/secrets/. Running in local mode.")
 except Exception as e:
     print(f"Error initializing Firebase: {e}")
     print("Running in local mode.")
