@@ -38,7 +38,12 @@ const Match = () => {
             if (err.code === 'ECONNABORTED') {
                 errorMessage = 'Request timed out. The backend might be starting up. Please try again.';
             } else if (!err.response) {
-                errorMessage = 'Network error. Please check your connection.';
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+                if (import.meta.env.PROD && (apiUrl.includes('localhost') || !import.meta.env.VITE_API_URL)) {
+                    errorMessage = 'Network Error: API URL is pointing to localhost or is missing. Please set VITE_API_URL in your Vercel project settings.';
+                } else {
+                    errorMessage = `Network error. Could not connect to the backend at ${apiUrl}. Please check your connection.`;
+                }
             } else {
                 errorMessage = err.response?.data?.error || err.message || 'Server error';
             }

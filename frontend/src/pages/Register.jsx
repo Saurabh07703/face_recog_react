@@ -124,7 +124,11 @@ const Register = () => {
             if (error.code === 'ECONNABORTED') {
                 errorMessage = 'Request timed out. The backend might be starting up (cold start). Please try again in a minute.';
             } else if (!error.response) {
-                errorMessage = 'Network error. Please check your connection or VITE_API_URL configuration.';
+                if (import.meta.env.PROD && (apiUrl.includes('localhost') || !import.meta.env.VITE_API_URL)) {
+                    errorMessage = 'Network Error: API URL is pointing to localhost or is missing. Please set VITE_API_URL in your Vercel project settings.';
+                } else {
+                    errorMessage = `Network error. Could not connect to the backend at ${apiUrl}. Please check your connection or CORS settings.`;
+                }
             } else {
                 errorMessage = error.response?.data?.error || error.message || 'Server error';
             }
