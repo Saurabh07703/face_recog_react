@@ -16,7 +16,14 @@ from PIL import Image
 import gc
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+# Enable CORS with more explicit settings if needed, but allow all for now
+CORS(app, resources={r"/*": {"origins": "*"}}) 
+
+@app.before_request
+def log_request_info():
+    app.logger.debug('Headers: %s', request.headers)
+    app.logger.debug('Body: %s', request.get_data())
+    print(f"Incoming {request.method} request to {request.path}")
 
 # Global variables for models (Lazy persistence)
 mtcnn_detector = None
@@ -276,6 +283,14 @@ def write_to_db(name, orientation, features):
             file.write(line + '\n')
             
     return True
+
+@app.route('/')
+def home():
+    return jsonify({
+        'message': 'Face Recognition API is running',
+        'endpoints': ['/upload', '/match', '/health'],
+        'backend': 'firebase' if db else 'local'
+    })
 
 @app.route('/health', methods=['GET'])
 def health():

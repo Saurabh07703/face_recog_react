@@ -102,20 +102,36 @@ const Register = () => {
         setLoading(true);
         setStatus({ type: 'info', message: `Uploading ${currentOrientation} face...` });
 
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+        if (import.meta.env.PROD && !import.meta.env.VITE_API_URL) {
+            console.warn("VITE_API_URL is not defined in production environment!");
+        }
+
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
             await axios.post(`${apiUrl}/upload`, {
                 name,
                 orientation: currentOrientation,
                 image: imgData,
+            }, {
+                timeout: 120000 // 120 seconds timeout for large model loading
             });
             // Success for this step
         } catch (error) {
             console.error(error);
-            const serverMsg = error.response?.data?.error || error.message || 'Unknown error';
+            let errorMessage = 'Unknown error';
+
+            if (error.code === 'ECONNABORTED') {
+                errorMessage = 'Request timed out. The backend might be starting up (cold start). Please try again in a minute.';
+            } else if (!error.response) {
+                errorMessage = 'Network error. Please check your connection or VITE_API_URL configuration.';
+            } else {
+                errorMessage = error.response?.data?.error || error.message || 'Server error';
+            }
+
             setStatus({
                 type: 'error',
-                message: `Failed ${currentOrientation}: ${serverMsg}`
+                message: `Failed ${currentOrientation}: ${errorMessage}`
             });
             setIsAutoCapturing(false); // Stop on error
         } finally {

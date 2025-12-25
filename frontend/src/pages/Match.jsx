@@ -27,12 +27,22 @@ const Match = () => {
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
             const response = await axios.post(`${apiUrl}/match`, {
                 image: imgSrc
+            }, {
+                timeout: 120000 // 120 seconds timeout
             });
 
             setResult(response.data);
         } catch (err) {
             console.error(err);
-            setError(err.response?.data?.error || 'Matching failed');
+            let errorMessage = 'Matching failed';
+            if (err.code === 'ECONNABORTED') {
+                errorMessage = 'Request timed out. The backend might be starting up. Please try again.';
+            } else if (!err.response) {
+                errorMessage = 'Network error. Please check your connection.';
+            } else {
+                errorMessage = err.response?.data?.error || err.message || 'Server error';
+            }
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

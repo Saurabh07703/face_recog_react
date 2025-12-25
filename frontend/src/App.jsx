@@ -1,11 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import axios from 'axios';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Register from './pages/Register';
 import Match from './pages/Match';
 
 function App() {
+  useEffect(() => {
+    // Warm up the backend (Render cold start)
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    axios.get(`${apiUrl}/health`).catch(() => {
+      console.log('Backend unique warming up...');
+    });
+  }, []);
+
   return (
     <Router>
       <div className="min-h-screen flex flex-col">

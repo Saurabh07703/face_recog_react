@@ -3,7 +3,6 @@ flask-cors
 gunicorn
 opencv-python-headless
 numpy<2
-mtcnn
 firebase-admin
 scikit-learn
 scipy
