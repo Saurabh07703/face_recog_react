@@ -16,14 +16,23 @@ from PIL import Image
 import gc
 
 app = Flask(__name__)
-# Enable CORS with more explicit settings if needed, but allow all for now
+# Enable CORS for all routes
 CORS(app, resources={r"/*": {"origins": "*"}}) 
+
+# Explicitly handle CORS in after_request for extra resilience
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
+
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # 16MB limit
 
 @app.before_request
 def log_request_info():
-    app.logger.debug('Headers: %s', request.headers)
-    app.logger.debug('Body: %s', request.get_data())
     print(f"Incoming {request.method} request to {request.path}")
+    # Removed body logging to prevent memory issues with large payloads
 
 # Global variables for models (Lazy persistence)
 mtcnn_detector = None
