@@ -13,11 +13,43 @@ const WebcamCapture = forwardRef(({ onCapture, isScanning = false }, ref) => {
     const webcamRef = useRef(null);
     const [image, setImage] = useState(null);
 
-    const capture = useCallback(() => {
+    const resizeImage = (base64Str) => {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.src = base64Str;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 640;
+                const MAX_HEIGHT = 480;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', 0.7)); // High compression
+            };
+        });
+    };
+
+    const capture = useCallback(async () => {
         const imageSrc = webcamRef.current?.getScreenshot();
         if (imageSrc) {
-            setImage(imageSrc);
-            onCapture(imageSrc); // Pass directly
+            const resized = await resizeImage(imageSrc);
+            setImage(resized);
+            onCapture(resized);
         }
     }, [webcamRef, onCapture]);
 

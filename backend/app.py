@@ -307,7 +307,21 @@ def home():
 
 @app.route('/health', methods=['GET'])
 def health():
-    return jsonify({'status': 'ok', 'backend': 'firebase' if db else 'local'})
+    try:
+        # Pre-warm models if not loaded
+        get_models()
+        return jsonify({
+            "status": "ok", 
+            "backend": "firebase" if db else "local",
+            "models_loaded": True
+        })
+    except Exception as e:
+        print(f"Health check warning: {e}")
+        return jsonify({
+            "status": "partial", 
+            "backend": "firebase" if db else "local",
+            "error": str(e)
+        }), 200 # Return 200 so Render doesn't restart immediately
 
 @app.route('/faces', methods=['GET'])
 def get_faces():

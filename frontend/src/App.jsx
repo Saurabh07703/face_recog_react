@@ -9,11 +9,18 @@ import Manage from './pages/Manage';
 
 function App() {
   useEffect(() => {
-    // Warm up the backend (Render cold start)
+    // Warm up the backend (Render cold start + model pre-loading)
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    axios.get(`${apiUrl}/health`).catch(() => {
-      console.log('Backend unique warming up...');
-    });
+    console.log('Backend warm-up sequence started...');
+
+    // Using a longer timeout for the pre-warm since it now loads models
+    axios.get(`${apiUrl}/health`, { timeout: 60000 })
+      .then((res) => {
+        console.log('Backend ready:', res.data);
+      })
+      .catch((err) => {
+        console.log('Backend warm-up notice:', err.message);
+      });
   }, []);
 
   return (
