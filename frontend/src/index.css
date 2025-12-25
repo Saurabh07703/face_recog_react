@@ -18,9 +18,7 @@
     --accent: 265 89% 66%;
   }
 
-  * {
-    @apply border-white/5;
-  }
+  /* Removed universal apply to avoid conflicts */
 
   body {
     @apply bg-background text-foreground font-sans antialiased selection:bg-primary/30;

@@ -47,8 +47,8 @@ const Manage = () => {
         }
     };
 
-    const filteredFaces = faces.filter(f =>
-        f.name.toLowerCase().includes(search.toLowerCase())
+    const filteredFaces = (faces || []).filter(f =>
+        f?.name?.toLowerCase().includes(search.toLowerCase())
     );
 
     return (
@@ -106,7 +106,7 @@ const Manage = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
-                                <AnimatePresence mode='popLayout'>
+                                <AnimatePresence mode='wait'>
                                     {filteredFaces.map((face) => (
                                         <motion.tr
                                             key={face.name}
@@ -119,7 +119,7 @@ const Manage = () => {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                                                        {face.name.charAt(0).toUpperCase()}
+                                                        {face?.name?.charAt(0)?.toUpperCase() || '?'}
                                                     </div>
                                                     <span className="font-medium text-white">{face.name}</span>
                                                 </div>
@@ -191,7 +191,7 @@ const Manage = () => {
                 <div className="glass-card p-6">
                     <h4 className="font-bold text-white mb-2">Database Stats</h4>
                     <div className="flex items-end gap-2">
-                        <span className="text-4xl font-bold text-primary">{faces.length}</span>
+                        <span className="text-4xl font-bold text-primary">{faces?.length || 0}</span>
                         <span className="text-gray-500 mb-1">Registered Users</span>
                     </div>
                 </div>

@@ -117,7 +117,11 @@ def upload():
     orientation = request.json['orientation']
     
     try:
-        image_data = request.json['image'].split(',')[1]
+        # Support both 'data:image/jpeg;base64,xxxx' and raw 'xxxx'
+        if ',' in request.json['image']:
+            image_data = request.json['image'].split(',')[1]
+        else:
+            image_data = request.json['image']
         
         # Decode base64 to bytes
         try:
@@ -303,7 +307,10 @@ def get_faces():
     # Extract distinct names and their orientations count
     names_data = {}
     for entry in entries:
-        name = entry['name']
+        if not isinstance(entry, dict): continue
+        name = entry.get('name')
+        if not name: continue
+        
         orientation = entry.get('orientation', 'unknown')
         if name not in names_data:
             names_data[name] = []
@@ -364,7 +371,12 @@ def perform_match():
         return jsonify({'error': 'No image data'}), 400
 
     try:
-        image_data = request.json['image'].split(',')[1]
+        # Support both 'data:image/jpeg;base64,xxxx' and raw 'xxxx'
+        if ',' in request.json['image']:
+            image_data = request.json['image'].split(',')[1]
+        else:
+            image_data = request.json['image']
+            
         image_bytes = base64.b64decode(image_data)
         
         # Robust decoding (reuse logic)

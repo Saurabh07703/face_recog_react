@@ -66,6 +66,7 @@ const Match = () => {
                     <AnimatePresence>
                         {(result || error) && (
                             <motion.div
+                                key={error ? 'error' : 'result'}
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.9 }}
@@ -102,7 +103,7 @@ const Match = () => {
                                         <div className="ml-auto text-right">
                                             <div className="text-xs uppercase tracking-wider opacity-60">Confidence</div>
                                             <div className="font-mono text-xl font-bold">
-                                                {(result?.similarity_score * 100).toFixed(1)}%
+                                                {result?.similarity_score != null ? (result.similarity_score * 100).toFixed(1) : '0.0'}%
                                             </div>
                                         </div>
                                     </div>
