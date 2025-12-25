@@ -297,11 +297,24 @@ def home():
         'backend': 'firebase' if db else 'local'
     })
 
+import threading
+
 @app.route('/health', methods=['GET'])
 def health():
+    # Trigger model loading in background
+    def prewarm():
+        try:
+            get_models()
+            print("Models pre-warmed successfully in background.")
+        except Exception as e:
+            print(f"Background pre-warm error: {e}")
+            
+    threading.Thread(target=prewarm).start()
+    
     return jsonify({
         "status": "ok", 
-        "backend": "firebase" if db else "local"
+        "backend": "firebase" if db else "local",
+        "message": "Warm-up triggered"
     })
 
 @app.route('/faces', methods=['GET'])

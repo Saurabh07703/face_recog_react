@@ -9,18 +9,25 @@ import Manage from './pages/Manage';
 
 function App() {
   useEffect(() => {
-    // Warm up the backend (Render cold start + model pre-loading)
+    // Aggressive backend warm-up (Render cold start + model pre-loading)
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    console.log('Backend warm-up sequence started...');
 
-    // Using a longer timeout for the pre-warm since it now loads models
-    axios.get(`${apiUrl}/health`, { timeout: 60000 })
-      .then((res) => {
-        console.log('Backend ready:', res.data);
-      })
-      .catch((err) => {
-        console.log('Backend warm-up notice:', err.message);
-      });
+    const warmup = (retries = 3) => {
+      console.log(`Backend warm-up attempt (${4 - retries}/3)...`);
+      axios.get(`${apiUrl}/health`, { timeout: 30000 })
+        .then((res) => {
+          console.log('Backend signaled ready:', res.data);
+        })
+        .catch((err) => {
+          console.warn('Warm-up attempt failed:', err.message);
+          if (retries > 0) {
+            console.log('Retrying in 5 seconds...');
+            setTimeout(() => warmup(retries - 1), 5000);
+          }
+        });
+    };
+
+    warmup();
   }, []);
 
   return (
