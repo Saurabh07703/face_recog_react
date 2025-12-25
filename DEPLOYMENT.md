@@ -19,9 +19,11 @@ We will deploy the backend first to get the URL.
     *   **Build Command**: `pip install -r requirements.txt`
     *   **Start Command**: `gunicorn app:app`
     *   **Plan**: Free (or Starter if you need more RAM for the AI model).
-6.  **Environment Variables** (Advanced):
-    *   Upload your `serviceAccountKey.json` contents as a "Secret File" named `serviceAccountKey.json` in Render dashboard if you want Firebase to work.
-    *   *Alternatively, just for testing, it will run in "local mode" (features.txt) but that is ephemeral on Render's free tier (data is lost on restart).* **Highly Recommended to set up Firebase properly on Render**.
+6.  **Persistent Storage (Critical)**:
+    *   By default, the app uses `features.txt`, which is **ephemeral** on Render (it gets deleted on restart).
+    *   **Requirement**: Set up Firebase Firestore.
+    *   **Action**: Upload your `serviceAccountKey.json` contents as a **Secret File** named `serviceAccountKey.json` in the Render dashboard (Environment tab).
+
 7.  Click **"Create Web Service"**.
 8.  **Wait for deploy**. Once finished, copy the **onrender.com URL** (e.g., `https://face-recog-backend.onrender.com`).
 
