@@ -296,7 +296,66 @@ def home():
 def health():
     return jsonify({'status': 'ok', 'backend': 'firebase' if db else 'local'})
 
+@app.route('/faces', methods=['GET'])
+def get_faces():
+    """List distinct names in the database."""
+    entries = read_database()
+    # Extract distinct names and their orientations count
+    names_data = {}
+    for entry in entries:
+        name = entry['name']
+        orientation = entry.get('orientation', 'unknown')
+        if name not in names_data:
+            names_data[name] = []
+        names_data[name].append(orientation)
+    
+    result = []
+    for name, orientations in names_data.items():
+        result.append({
+            'name': name,
+            'orientations': orientations,
+            'count': len(orientations)
+        })
+        
+    return jsonify(result)
 
+@app.route('/delete_face', methods=['POST'])
+def delete_face():
+    """Delete all entries for a given name."""
+    if 'name' not in request.json:
+        return jsonify({'error': 'Name is required'}), 400
+    
+    name = request.json['name']
+    
+    try:
+        # If using Firebase
+        if db:
+            faces_ref = db.collection('faces')
+            docs = faces_ref.where('name', '==', name).stream()
+            deleted_count = 0
+            for doc in docs:
+                doc.reference.delete()
+                deleted_count += 1
+            return jsonify({'message': f'Deleted {deleted_count} entries for {name}'})
+            
+        # Fallback to local file
+        entries = read_database()
+        new_entries = [e for e in entries if e['name'] != name]
+        
+        if len(entries) == len(new_entries):
+             return jsonify({'error': 'Name not found'}), 404
+             
+        filename = 'features.txt'
+        with open(filename, 'w') as file:
+            for entry in new_entries:
+                line = json.dumps(entry)
+                file.write(line + '\n')
+        
+        return jsonify({'message': f'Deleted entries for {name} successfully'})
+        
+    except Exception as e:
+        print(f"Error in delete_face: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/match', methods=['POST'])
 def perform_match():

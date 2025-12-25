@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ScanFace, UserPlus, Home } from 'lucide-react';
+import { ScanFace, UserPlus, Home, Settings } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'framer-motion';
 
@@ -42,6 +42,7 @@ const Navbar = () => {
                         <NavItem to="/" icon={Home} label="Home" />
                         <NavItem to="/register" icon={UserPlus} label="Register" />
                         <NavItem to="/match" icon={ScanFace} label="Match" />
+                        <NavItem to="/manage" icon={Settings} label="Manage" />
                     </div>
                 </div>
             </div>

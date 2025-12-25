@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Register from './pages/Register';
 import Match from './pages/Match';
+import Manage from './pages/Manage';
 
 function App() {
   useEffect(() => {
@@ -24,6 +25,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/register" element={<Register />} />
             <Route path="/match" element={<Match />} />
+            <Route path="/manage" element={<Manage />} />
           </Routes>
         </main>
       </div>
