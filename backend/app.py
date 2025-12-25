@@ -19,14 +19,6 @@ app = Flask(__name__)
 # Enable CORS for all routes
 CORS(app, resources={r"/*": {"origins": "*"}}) 
 
-# Explicitly handle CORS in after_request for extra resilience
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    return response
-
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # 16MB limit
 
 @app.before_request
@@ -307,21 +299,10 @@ def home():
 
 @app.route('/health', methods=['GET'])
 def health():
-    try:
-        # Pre-warm models if not loaded
-        get_models()
-        return jsonify({
-            "status": "ok", 
-            "backend": "firebase" if db else "local",
-            "models_loaded": True
-        })
-    except Exception as e:
-        print(f"Health check warning: {e}")
-        return jsonify({
-            "status": "partial", 
-            "backend": "firebase" if db else "local",
-            "error": str(e)
-        }), 200 # Return 200 so Render doesn't restart immediately
+    return jsonify({
+        "status": "ok", 
+        "backend": "firebase" if db else "local"
+    })
 
 @app.route('/faces', methods=['GET'])
 def get_faces():
