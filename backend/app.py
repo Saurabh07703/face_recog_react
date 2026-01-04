@@ -57,7 +57,13 @@ def get_models():
 
         # Force garbage collection
         gc.collect()
-        print("Models loaded successfully.")
+        
+        # Clear intermediate variables
+        if 'img_tensor' in locals(): del img_tensor
+        torch.cuda.empty_cache() # harmless on CPU
+        gc.collect()
+        
+        print("Models loaded successfully. Memory cleanup done.")
         
     return mtcnn_detector, facenet_model, device
 
