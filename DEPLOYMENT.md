@@ -11,21 +11,18 @@ We will deploy the backend first to get the URL.
 
 1.  **Push your code to GitHub**.
 2.  Go to [Render.com](https://render.com) and sign up/login.
-3.  Click **"New +"** -> **"Web Service"**.
-4.  Connect your GitHub repository.
-5.  **Configure the Service**:
-    *   **Root Directory**: `backend` (Important! This tells Render where the Python app is).
-    *   **Runtime**: **Python 3**.
-    *   **Build Command**: `pip install -r requirements.txt`
-    *   **Start Command**: `gunicorn app:app`
-    *   **Plan**: Free (or Starter if you need more RAM for the AI model).
-6.  **Persistent Storage (Critical)**:
+3.  **Create a New Blueprint Instance**:
+    *   Click **"New +"** -> **"Blueprint"**.
+    *   Connect your GitHub repository.
+    *   Render will automatically detect the `render.yaml` file.
+    *   Click **"Apply"** or **"Approve"**.
+4.  **Persistent Storage (Critical)**:
     *   By default, the app uses `features.txt`, which is **ephemeral** on Render (it gets deleted on restart).
     *   **Requirement**: Set up Firebase Firestore.
-    *   **Action**: Upload your `serviceAccountKey.json` contents as a **Secret File** named `serviceAccountKey.json` in the Render dashboard (Environment tab).
+    *   **Action**: Upload your `serviceAccountKey.json` contents as a **Secret File** named `serviceAccountKey.json` in the Render dashboard (Environment tab) -> OR relies on the Blueprint prompting you for it (if configured, but simpler to add manually after if needed).
+    *   *Note*: The blueprint defines the secret `serviceAccountKey.json`. Render might ask you to input the *contents* of this file during the Blueprint creation. Paste the entire JSON content there.
 
-7.  Click **"Create Web Service"**.
-8.  **Wait for deploy**. Once finished, copy the **onrender.com URL** (e.g., `https://face-recog-backend.onrender.com`).
+5.  **Wait for deploy**. Once finished, copy the **onrender.com URL** (e.g., `https://face-recog-backend.onrender.com`).
 
 ## Part 2: Deploy Frontend (Vercel)
 
