@@ -41,6 +41,8 @@ def get_models():
         
         # Disable gradients globally for inference to save memory
         torch.set_grad_enabled(False)
+        torch.set_num_threads(1) # CRITICAL: Limit CPU threads to prevent OOM on Render free tier
+
         
         # Load MTCNN
         mtcnn_detector = MTCNN(keep_all=False, select_largest=True, device=device)
