@@ -119,8 +119,8 @@ def extract_features_facenet(image):
 
 @app.route('/upload', methods=['POST'])
 def upload():
-    if 'image' not in request.json or 'name' not in request.json or 'orientation' not in request.json:
-        return jsonify({'error': 'Incomplete data'}), 400
+    if not request.json or 'image' not in request.json or 'name' not in request.json or 'orientation' not in request.json:
+        return jsonify({'error': 'Incomplete data or invalid JSON'}), 400
 
     name = request.json['name']
     orientation = request.json['orientation']
@@ -392,8 +392,8 @@ def delete_face():
 @app.route('/match', methods=['POST'])
 def perform_match():
     time1 = time.time()
-    if 'image' not in request.json:
-        return jsonify({'error': 'No image data'}), 400
+    if not request.json or 'image' not in request.json:
+        return jsonify({'error': 'No image data or invalid JSON'}), 400
 
     try:
         # Support both 'data:image/jpeg;base64,xxxx' and raw 'xxxx'
