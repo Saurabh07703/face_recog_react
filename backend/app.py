@@ -72,21 +72,37 @@ def get_models():
 # Initialize Firebase
 db = None
 try:
-    # Check local file (dev) or Render secret path (prod)
-    cred_path = "serviceAccountKey.json"
-    if not os.path.exists(cred_path):
-        cred_path = "/etc/secrets/serviceAccountKey.json"
+    # Prioritize environment variable (for Hugging Face Spaces)
+    firebase_creds_json = os.environ.get('FIREBASE_CREDENTIALS')
+    
+    if firebase_creds_json:
+        # Load from JSON string in env var
+        try:
+            cred_dict = json.loads(firebase_creds_json)
+            cred = credentials.Certificate(cred_dict)
+            firebase_admin.initialize_app(cred)
+            db = firestore.client()
+            print("Firebase initialized successfully using FIREBASE_CREDENTIALS env var")
+        except Exception as e_env:
+             print(f"Error parsing FIREBASE_CREDENTIALS: {e_env}")
 
-    if os.path.exists(cred_path):
-        cred = credentials.Certificate(cred_path)
-        firebase_admin.initialize_app(cred)
-        db = firestore.client()
-        print(f"Firebase initialized successfully using {cred_path}")
-    else:
-        print("Warning: serviceAccountKey.json not found in local or /etc/secrets/. Running in local mode.")
+    if not db:
+        # Fallback to local file (dev) or Render secret path (prod legacy)
+        cred_path = "serviceAccountKey.json"
+        if not os.path.exists(cred_path):
+            cred_path = "/etc/secrets/serviceAccountKey.json"
+
+        if os.path.exists(cred_path):
+            cred = credentials.Certificate(cred_path)
+            firebase_admin.initialize_app(cred)
+            db = firestore.client()
+            print(f"Firebase initialized successfully using {cred_path}")
+        else:
+            print("Warning: No Firebase credentials found (Env or File). Running in local mode.")
 except Exception as e:
     print(f"Error initializing Firebase: {e}")
-    print("Running in local mode.")
+    if not db:
+        print("Running in local mode.")
 
 # Function to extract features from an image using FaceNet model
 def extract_features_facenet(image):
