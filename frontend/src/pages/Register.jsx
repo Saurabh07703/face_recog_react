@@ -99,6 +99,12 @@ const Register = () => {
             return;
         }
 
+        if (!imgData) {
+            setStatus({ type: 'error', message: 'Please capture an image first' });
+            setIsAutoCapturing(false);
+            return;
+        }
+
         setLoading(true);
         setStatus({ type: 'info', message: `Uploading ${currentOrientation} face...` });
 
