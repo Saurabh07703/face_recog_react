@@ -119,7 +119,7 @@ def extract_features_facenet(image):
 
 @app.route('/upload', methods=['POST'])
 def upload():
-    if not request.json or 'image' not in request.json or 'name' not in request.json or 'orientation' not in request.json:
+    if not request.json or not request.json.get('image') or not request.json.get('name') or not request.json.get('orientation'):
         return jsonify({'error': 'Incomplete data or invalid JSON'}), 400
 
     name = request.json['name']
@@ -354,8 +354,8 @@ def get_faces():
 @app.route('/delete_face', methods=['POST'])
 def delete_face():
     """Delete all entries for a given name."""
-    if 'name' not in request.json:
-        return jsonify({'error': 'Name is required'}), 400
+    if not request.json or 'name' not in request.json:
+        return jsonify({'error': 'Name is required or invalid JSON'}), 400
     
     name = request.json['name']
     
@@ -392,7 +392,7 @@ def delete_face():
 @app.route('/match', methods=['POST'])
 def perform_match():
     time1 = time.time()
-    if not request.json or 'image' not in request.json:
+    if not request.json or not request.json.get('image'):
         return jsonify({'error': 'No image data or invalid JSON'}), 400
 
     try:
